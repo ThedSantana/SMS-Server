@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen
+    xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <PreferenceCategory
+        android:title="Server Details" >
+
+        <SwitchPreference
+            android:title="SMS Server"
+            android:key="server_on"
+            android:defaultValue="false" />
+
+
+        <EditTextPreference
+            android:key="password"
+            android:title="Password"
+            android:defaultValue="alpine"
+            android:summary="Enter this password to login" />
+
+        <Preference
+            android:key="url"
+            android:title="Server URL" />
+
+        <EditTextPreference
+            android:key="port"
+            android:title="Port"
+            android:defaultValue="3446"
+            android:inputType="number"
+            android:digits="0123456789"
+            android:maxLength="4" />
+
+
+    </PreferenceCategory>
+
+    <PreferenceCategory
+        android:title="About" >
+
+        <Preference
+            android:title="Setup Tutorial"
+            android:key="help" />
+
+    </PreferenceCategory>
+
+</PreferenceScreen>

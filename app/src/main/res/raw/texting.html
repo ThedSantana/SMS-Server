@@ -1,0 +1,316 @@
+<html>
+<head>
+<!--
+TODO LIST for Beta 2:
+Implement marking read texts
+Search algorithm include last names
+Notifications?
+Many many colsole logs.
+
+BUGS:
+Fix unstyled sent messages
+sending in one thread
+recents no name
+SocketTimeoutExceptions
+//-->
+	<style type="text/CSS">
+		.contact{
+			font-size: 19px;
+			margin: 12px;
+			padding: 13px;
+			background-color: #dfdfdf;
+			min-width:90px;
+			overflow:scroll;
+		}
+		table{
+			width:100%;
+		}
+		.me{
+			margin: 7px;
+			padding: 12px;
+			border-radius: 12px;
+			display:inline-block;
+			font-size: 22px;
+			color: white;
+			max-width: 75%;
+			background-color: #3f4fff;
+			text-align: left;
+		}
+		.you{
+			margin: 7px;
+			padding: 12px;
+			border-radius: 12px;
+			display:inline-block;
+			font-size: 22px;
+			color: black;
+			max-width: 75%;
+			background-color: #efefef;
+		}
+	</style>
+	<script type="text/javascript">
+	
+		var token = <?TOKEN>;
+		var contacts = <?ADDRESS_BOOK>;
+		var frequents = <?FREQUENT_CONTACTS>;
+		var inbox;
+		var selectedContact;
+		
+		// vars for the ping bar
+		var lastPingTime;
+		var canvas;
+		var contact;
+		
+		// method to asynchronously pull dynamic data
+		function fullUpdate(){
+			// the inbox must be updated asynchronously so the DOM changes happen 
+			// when the request has a response
+			var inboxRequest = new XMLHttpRequest();
+			inboxRequest.onreadystatechange = function(){
+				if (inboxRequest.readyState==4 && inboxRequest.status==200){
+					inbox = JSON.parse(inboxRequest.responseText);
+					// add the inbox to the inbox table
+					writeTableFromContacts(inbox, "recents-table");
+					console.log(selectedContact);
+					if(selectedContact === undefined){
+						// On the very first page load, find the most recent contact and load it on the main screen
+						selectedContact = document.getElementById(inbox[0]);
+						selectedContact.click();
+					}
+				}
+			}
+			inboxRequest.open("GET", "/inbox?token=" + token, true);
+			inboxRequest.send();
+		}
+		
+		// load the contacts JSON into the tables and start the polling interval
+		function setup(){
+			// Add contacts to the contacts table
+			var table = document.getElementById("contacts-table");
+			for(var i = 0; i < contacts.length; i++){
+				var row = document.createElement("tr");
+				var block = document.createElement("td");
+				block.className = "contact";
+				row.appendChild(block);
+				block.innerHTML = contacts[i].name;
+				block.id = contacts[i].number;
+				block.addEventListener("click", function(){
+					// runs when this element is clicked
+					contactClicked(this);
+					if(selectedContact != undefined){
+						selectedContact.style.backgroundColor = "#dfdfdf";
+					}
+					selectedContact = this;
+					this.style.backgroundColor = "#5f8fff";
+				});
+				table.appendChild(row);
+			}
+			// add frequent contacts to the frequents table with the same click listener
+			writeTableFromContacts(frequents, "frequents-table");
+			// start the polling interval
+			window.setInterval(function(){
+				var pollingRequest = new XMLHttpRequest();
+				pollingRequest.onreadystatechange = function(){
+					if (pollingRequest.readyState==4 && pollingRequest.status==200){
+						// when the response is ready
+						if(JSON.parse(pollingRequest.responseText)){
+							// if the response is "true"
+							fullUpdate();
+						}
+						lastPingTime = new Date().getTime();
+					}
+				}
+				pollingRequest.open("GET", "/poll?token=" + token, true);
+				pollingRequest.send();
+			}, 2000);	// poll the server every 2 seconds
+			// start another interval to make the button color reflect the internet quality
+			canvas = document.getElementById("loading-canvas");
+			context = canvas.getContext("2d");
+			context.rect(0, 0, 2, 2);
+			window.setInterval(function(){
+				var decay = new Date().getTime() - lastPingTime;
+				var red = Math.min(Math.max( (decay - 4000)/ 8, 0), 255);
+				var green = Math.min(Math.max( (8000 - decay) / 8, 0), 255);
+				var blue = Math.min(Math.max( 255 - Math.abs(decay - 6000) / 8 , 0), 255);
+				context.fillStyle='rgb(' + red + ',' + green + ',' + blue + ')';
+				context.fill();
+			}, 0);	// update the button lots a second
+			fullUpdate();	// initialize everything that changes asynchronously
+		}
+		
+		// update the main frame to have the conversations of the given row.
+		function contactClicked(row){
+			var request = new XMLHttpRequest();
+			request.onreadystatechange = function(){
+				if(request.readyState == 4 && request.status == 200){
+					var conversation = JSON.parse(request.responseText);
+					var table = document.getElementById("conversation-table");
+					table.innerHTML = "";
+					for(var i = 0; i < conversation.length; i++){
+						var message = conversation[i];
+						var tableRow = document.createElement("tr");
+						var tableData = document.createElement("td");
+						var tableText = document.createElement("div");
+						tableText.innerHTML = message.message;
+						if(message.sender == 1){
+							tableText.className = "you";
+							tableData.style.textAlign = "left";
+						}else if(message.sender == 2){
+							tableText.className = "me";
+							tableData.style.textAlign = "right";
+						}
+						tableData.appendChild(tableText);
+						tableRow.appendChild(tableData);
+						table.appendChild(tableRow);
+					}
+					var dummyRow = document.createElement("tr");
+					dummyRow.style.height = 50;
+					table.appendChild(dummyRow);
+					window.scrollTo(0,document.body.scrollHeight);
+				}
+			}
+			request.open("GET", "/getthread?token="+token+"&number="+encodeURIComponent(row.id), true);
+			request.send();
+		}
+		
+		// send the text in the textbox to the specified number
+		function sendText(){
+			var sender = new XMLHttpRequest();
+			var textBox = document.getElementById("respond-textbox");
+			sender.open("GET", 
+				"/send?token="+token+"&message="+encodeURIComponent(textBox.value) + "&number=" + encodeURIComponent(selectedContact.id), 
+				true);
+			sender.send();
+			// add a dummy text to the list
+			var tr = document.createElement("tr");
+			var td = document.createElement("td");
+			var div = document.createElement("div");
+			div.innerHTML = textBox.value;
+			div.className = "me";
+			div.style.backgroundColor = "#efefef";
+			div.style.color = "black";
+			td.style.textAlign = "right";
+			td.appendChild(div);
+			tr.appendChild(td);
+			// this needs to be second to last because of the send box. that means we have to
+			// remove last child, add this one, then re add the last child.
+			var table = document.getElementById("conversation-table");
+			var dummy = table.lastChild;
+			table.removeChild(table.lastChild);
+			table.appendChild(tr);
+			table.appendChild(dummy);
+			// scroll to the bottom and reset the text box
+			window.scrollTo(0,document.body.scrollHeight);
+			textBox.value = "";
+		}
+		
+		// search function for the alphabetical list
+		function search(searchBox, event){
+			var searchWord = searchBox.value.toLowerCase();
+			var result = null;
+			// search for 
+			for(var key in contacts){
+				if(contacts.hasOwnProperty(key)){
+					var object = contacts[key];
+					if(object.name.toLowerCase().indexOf(searchWord) == 0){
+						// this key case insensitive matches the search at the start of the word
+						result = document.getElementById(object.number);
+						break;
+					}
+				}
+			}
+			if(result == null){
+				searchBox.style.color = "#FF0000";
+			}else{
+				searchBox.style.color = "#000000";
+				var container = document.getElementById("contacts-container");
+				container.scrollTop = result.offsetTop;
+			}
+			if(event.keyCode == 13){
+				result.click();
+				document.getElementById("respond-textbox").focus();
+			}
+		}
+		
+		/**
+		 * This function takes an array of phone numbers and writes it to the DOM Table identified by a string
+		 * @param numbers, an array of string numbers to lookup in the contact list
+		 * @param id, the id of the target table
+		 */
+		function writeTableFromContacts(numbers, id){
+			var table = document.getElementById(id);
+			table.innerHTML = "";
+			for(var i = 0; i < numbers.length; i++){
+				// search for the name of this contact
+				var contactName = numbers[i];
+				var search = numbers[i].replace(/[-+() ]/g, "");
+				for(var j = 0; j < contacts.length; j++){
+					var clean = contacts[j].number.replace(/[-+() ]/g, "");
+					if(clean == search){
+						contactName = contacts[j].name;
+						break;
+					}
+				}
+				var row = document.createElement("tr");
+				var block = document.createElement("td");
+				block.className = "contact";
+				row.appendChild(block);
+				block.innerHTML = contactName;
+				block.id = numbers[i];
+				block.addEventListener("click", function(){
+					// runs when this element is clicked
+					contactClicked(this);
+					if(selectedContact != undefined){
+						selectedContact.style.backgroundColor = "#dfdfdf";
+					}
+					selectedContact = this;
+					this.style.backgroundColor = "#5f8fff";
+				});
+				table.appendChild(row);
+			}
+		}
+		
+	</script>
+</head>
+<body onload="setup();">
+	<div id="alphabetical-contacts-container" style="position:fixed; background-color: black;top:0px; right:0px; width:15%; height:100%; min-width:90px;">
+		<!-- Right side Container //-->
+		<div id="alphabetical-header">
+			<input type="text" style="width:100%;font-size:19px;height:7%;" placeholder="Search" onkeyup="search(this, event)" onClick="this.select();"/>
+		</div> 
+		<div id="contacts-container" style="overflow:scroll;width:100%;height:93%;">
+			<table id="contacts-table">
+				
+			</table>
+		</div>
+	</div>
+	<div id="inbox-container" style="position:fixed;background-color:#888888;overflow:scroll;top:0px;left:0px;width:15%;height:100%; min-width:90px;">
+		<!-- Left side container //-->
+		<div class="contact" style="margin:0; background-color:white; font-weight:bold;">
+			Frequents
+		</div>
+		<table id="frequents-table">
+
+		</table>
+		<div class="contact" style="margin:0; background-color:white; font-weight:bold;">
+			Recents
+		</div>
+		<table id="recents-table">
+
+		</table>
+	</div>
+	<div id="conversation-container" style="position:absolute;width:70%; height:100%; left:15%; bottom: 0px;">
+		<!-- Main Conversation container //-->
+		<table id="conversation-table">
+			
+		</table>
+	</div>
+	<div id="respond-container" style="position:fixed;background-color: #9f9f9f;width: 70%; height: 50px; bottom:0px; left:15%;">
+		<!-- Send text box container //-->
+		<input type="text" id="respond-textbox" autocomplete="off" onkeyup="if(event.keyCode == 13){sendText()}" style="font-size:22px;width:90%;height:100%;border-radius:8px;"/>
+		<div style="height:100%;width:10%;float:right;">
+			<canvas width="2" height="2" style="width:100%; height:10%;" id="loading-canvas"></canvas>
+			<button id="send-button" onclick="sendText();" style="width:100%;height:90%;font-size:22px;">Send</button> 
+		</div>
+	</div>
+</body>
+</html>

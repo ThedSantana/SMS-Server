@@ -1,0 +1,54 @@
+<html>
+	<head>
+		<style type="text/CSS">
+			.container{
+				width:50%;
+				height:50%;
+				position:absolute;
+				top:25%;
+				right:25%;
+				background-color:#33b5e5;
+				border-radius: 20px;
+			}
+			td{
+				width:50%;
+				height:33%;
+				text-align:center;
+			}
+			#password{
+				font-size:25px;
+				margin-left: auto;
+				margin-top: auto;
+				width:90%;
+			}
+			#submit{
+				font-size:30px;
+			}
+			#text{
+				color:#f2f2f2;
+				font-size:30px;
+			}
+			#error{
+				color:#FF0000;
+				font-size:16px;
+				display:<?ERROR>;
+			}
+		</style>
+	</head>
+	<body>
+		<table class="container">
+			<form action="home" method="POST">
+				<tr><td>
+					<p id="text">Log into <?PHONE_NAME> </p>
+					<a id="error">There was an error logging in.</a>
+				</td></tr>
+				<tr><td>
+					<input id="password" type="password" autofocus name="pwd"/>
+				</td></tr>
+				<tr><td>
+					<input id="submit" type="button" value="Authenticate">
+				</td></tr>
+			</form>
+		</table>
+	</body>
+</html>

@@ -1,0 +1,94 @@
+Applications Graphics Acceleration Info:
+Uptime: 3115338 Realtime: 3115331
+
+** Graphics info for pid 4915 [com.wylder.smsserver] **
+
+Recent DisplayList operations
+  DrawRenderNode
+    DrawRect
+  DrawRenderNode
+    Save
+    ClipRect
+    DrawRenderNode
+      DrawRenderNode
+        Translate
+        DrawFunctor
+        Save
+        Rotate
+        Translate
+        Save
+        Translate
+        Scale
+        Translate
+        ClipRect
+        DrawCircle
+        RestoreToCount
+    RestoreToCount
+  DrawRenderNode
+RestoreToCount
+DrawRect
+DrawFunctor
+Save
+DrawRenderNode
+  DrawRenderNode
+    DrawRect
+  DrawRenderNode
+    Save
+    ClipRect
+    DrawRenderNode
+      DrawRenderNode
+        Translate
+        DrawFunctor
+        Save
+        Rotate
+        Translate
+        Save
+        Translate
+        Scale
+        Translate
+        ClipRect
+        DrawCircle
+        RestoreToCount
+    RestoreToCount
+  DrawRenderNode
+RestoreToCount
+DrawRect
+DrawFunctor
+
+Caches:
+Current memory usage / total memory usage (bytes):
+  TextureCache           131188 / 52428800
+  LayerCache                  0 / 35651584 (numLayers = 0)
+  Garbage layers              0
+  Active layers               0
+  RenderBufferCache           0 /  4194304
+  GradientCache               0 /  2097152
+  PathCache                   0 / 10485760
+  TessellationCache        2976 /  1048576
+  TextDropShadowCache         0 /  6291456
+  PatchCache               2048 /   131072
+  FontRenderer 0 A8      524288 /   524288
+  FontRenderer 0 RGBA         0 /        0
+  FontRenderer 0 total   524288 /   524288
+Other:
+  FboCache                    0 /        0
+Total memory usage:
+  660500 bytes, 0.63 MB
+
+Profile data in ms:
+
+	com.wylder.smsserver/com.wylder.smsserver.SettingsActivity/android.view.ViewRootImpl@2792bd71 (visibility=8)
+	com.wylder.smsserver/com.wylder.smsserver.HelpActivity/android.view.ViewRootImpl@5994756 (visibility=0)
+View hierarchy:
+
+  com.wylder.smsserver/com.wylder.smsserver.SettingsActivity/android.view.ViewRootImpl@2792bd71
+  55 views, 43.83 kB of display lists
+
+  com.wylder.smsserver/com.wylder.smsserver.HelpActivity/android.view.ViewRootImpl@5994756
+  6 views, 6.04 kB of display lists
+
+
+Total ViewRootImpl: 2
+Total Views:        61
+Total DisplayList:  49.87 kB
+
